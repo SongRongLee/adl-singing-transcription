@@ -1,5 +1,21 @@
 # **Applied Deep Learning Spring 2020 Final Project**
 
+## **Ground truth file structure**
+```
+{
+  "song_id": [[start_time, end_time, pitch], ...]
+  ...
+}
+```
+For example:  
+```
+{
+  "1": [[0.0, 0.5, C1], ...],
+  ...
+  "123": [[0.0, 0.5, D2], ...]
+}
+```
+
 ## **Scripts usage**
 
 ### **Evaluation**
