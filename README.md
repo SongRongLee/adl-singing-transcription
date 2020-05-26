@@ -3,16 +3,16 @@
 ## **Ground truth file structure**
 ```
 {
-  "song_id": [[start_time, end_time, pitch], ...]
+  "song_id": [[start_time, end_time, midi_num], ...]
   ...
 }
 ```
 For example:  
 ```
 {
-  "1": [[0.0, 0.5, C1], ...],
+  "1": [[0.0, 0.5, 60], ...],
   ...
-  "123": [[0.0, 0.5, D2], ...]
+  "123": [[0.0, 0.5, 61], ...]
 }
 ```
 
