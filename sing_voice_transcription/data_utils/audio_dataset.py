@@ -62,8 +62,7 @@ def preprocess(gt_data, length):
 class AudioDataset(Dataset):
     def __init__(self, data_dir, is_test=False):
         self.data_instances = []
-        count = 0
-        for the_dir in os.listdir(data_dir):
+        for the_dir in tqdm(os.listdir(data_dir)):
             wav_path = data_dir + "/" + the_dir + "/Vocal.wav"
             gt_path = data_dir + "/" + the_dir + "/" + the_dir + "_groundtruth.txt"
             sr = 16000
@@ -75,12 +74,10 @@ class AudioDataset(Dataset):
 
             gt_data = np.loadtxt(gt_path)
             answer_data = preprocess(gt_data, data.shape[0])
-            #print (data.shape)
-            print(answer_data.shape)
-            #print (answer_data[1000])
+            # print (data.shape)
+            # print(answer_data.shape)
+            # print (answer_data[1000])
             self.data_instances.append((data, answer_data))
-            count = count + 1
-            print("%d songs processed" % (count))
 
         print('Dataset initialized from {}.'.format(data_dir))
 
