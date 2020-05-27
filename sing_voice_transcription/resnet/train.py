@@ -10,11 +10,11 @@ def main(args):
         train_dataset_path=args.training_dataset,
         valid_dataset_path=args.validation_dataset,
         model_dir=args.model_dir,
-        batch_size=64,
-        valid_batch_size=200,
-        epoch=30,
+        batch_size=50,
+        valid_batch_size=50,
+        epoch=1000,
         lr=1e-3,
-        print_every_iter=10,
+        save_every_epoch=50,
     )
 
 

@@ -7,8 +7,13 @@ from pathlib import Path
 import pickle
 from tqdm import tqdm
 
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))  # nopep8
+sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))  # nopep8
+from data_utils import value_to_label
+
 from net import ResNet
-from ..data_utils import value_to_label
 
 
 class ResNetPredictor:
@@ -36,7 +41,7 @@ class ResNetPredictor:
           - valid_batch_size
           - epoch
           - lr
-          - print_every_iter
+          - save_every_epoch
         """
         # Set paths
         self.train_dataset_path = train_dataset_path
@@ -49,10 +54,12 @@ class ResNetPredictor:
         self.valid_batch_size = training_args['valid_batch_size']
         self.epoch = training_args['epoch']
         self.lr = training_args['lr']
-        self.print_every_iter = training_args['print_every_iter']
+        self.save_every_epoch = training_args['save_every_epoch']
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
-        self.criterion = nn.CrossEntropyLoss()
+        self.onset_criterion = nn.BCEWithLogitsLoss()
+        self.offset_criterion = nn.BCEWithLogitsLoss()
+        self.pitch_criterion = nn.CrossEntropyLoss()
 
         # Read the datasets
         print('Reading datasets...')
@@ -88,84 +95,72 @@ class ResNetPredictor:
         for epoch in range(1, self.epoch + 1):
             self.model.train()
 
-            # Run iteration
+            # Run iterations
             total_training_loss = 0
             for batch_idx, batch in enumerate(self.train_loader):
                 self.optimizer.zero_grad()
 
                 # Parse batch data
-                input_tensor = batch[0].cuda()
-                gt_tensor = batch[1].cuda()
+                input_tensor = batch[0].permute(0, 2, 1).unsqueeze(1).cuda()
+                osnet_prob, offset_prob, pitch_class = batch[1][:, 0].float().cuda(), batch[1][:, 1].float().cuda(), batch[1][:, 2].cuda()
 
                 # Forward model
-                output = self.model(input_tensor)
+                onset_logits, offset_logits, pitch_logits = self.model(input_tensor)
 
-                loss = self.criterion(output, gt_tensor)
+                # Calculate loss
+                loss = self.onset_criterion(onset_logits, osnet_prob) \
+                    + self.offset_criterion(offset_logits, offset_prob) \
+                    + self.pitch_criterion(pitch_logits, pitch_class)
+
                 loss.backward()
-
                 self.optimizer.step()
 
                 total_training_loss += loss.item()
 
-                # Show training message
-                if batch_idx % self.print_every_iter == 0 or batch_idx == self.iters_per_epoch-1:
-                    print(
-                        '| Epoch [{:4d}/{:4d}] Iter[{:4d}/{:4d}] Loss {:.4f} Time {:.1f}'.format(
-                            epoch,
-                            self.epoch,
-                            batch_idx+1,
-                            self.iters_per_epoch,
-                            loss.item(),
-                            time.time()-start_time,
-                        ),
-                        end='\r',
-                    )
-
                 # Free GPU memory
                 # torch.cuda.empty_cache()
 
-                if batch_idx >= self.iters_per_epoch-1:
-                    break
+            if epoch % self.save_every_epoch == 0:
+                # Perform validation
+                self.model.eval()
+                with torch.no_grad():
+                    total_valid_loss = 0
+                    for batch_idx, batch in enumerate(self.valid_loader):
+                        # Parse batch data
+                        input_tensor = batch[0].permute(0, 2, 1).unsqueeze(1).cuda()
+                        osnet_prob, offset_prob, pitch_class = batch[1][:, 0].float().cuda(), batch[1][:, 1].float().cuda(), batch[1][:, 2].cuda()
 
-            # Perform validation
-            self.model.eval()
-            with torch.no_grad():
-                total_valid_loss = 0
-                for batch_idx, batch in enumerate(self.valid_loader):
-                    # Parse batch data
-                    input_tensor = batch[0].cuda()
-                    gt_tensor = batch[1].cuda()
+                        # Forward model
+                        onset_logits, offset_logits, pitch_logits = self.model(input_tensor)
 
-                    # Forward model
-                    input_tensor, gt_tensor = input_tensor.cuda(), gt_tensor.cuda()
-                    output = self.model(input_tensor)
+                        # Calculate loss
+                        loss = self.onset_criterion(onset_logits, osnet_prob) \
+                            + self.offset_criterion(offset_logits, offset_prob) \
+                            + self.pitch_criterion(pitch_logits, pitch_class)
+                        total_valid_loss += loss.item()
 
-                    loss = self.criterion(output, gt_tensor)
-                    total_valid_loss += loss.item()
+                        # Free GPU memory
+                        # torch.cuda.empty_cache()
 
-                    # Free GPU memory
-                    # torch.cuda.empty_cache()
+                # Save model
+                save_dict = self.model.state_dict()
+                target_model_path = Path(self.model_dir) / 'e_{}'.format(epoch)
+                torch.save(save_dict, target_model_path)
 
-            # Save loss list
-            training_loss_list.append(total_training_loss/self.iters_per_epoch)
-            valid_loss_list.append(total_valid_loss/len(self.valid_loader))
+                # Save loss list
+                training_loss_list.append((epoch, total_training_loss/self.iters_per_epoch))
+                valid_loss_list.append((epoch, total_valid_loss/len(self.valid_loader)))
 
-            # Safe model
-            save_dict = self.model.state_dict()
-
-            target_model_path = Path(self.model_dir) / 'e_{}'.format(epoch)
-            torch.save(save_dict, target_model_path)
-
-            # Epoch done message
-            print(
-                '| Epoch [{:4d}/{:4d}] Train Loss {:.4f} Valid Loss {:.4f} Time {:.1f}'.format(
-                    epoch,
-                    self.epoch,
-                    training_loss_list[-1],
-                    valid_loss_list[-1],
-                    time.time()-start_time,
-                ),
-            )
+                # Epoch statistics
+                print(
+                    '| Epoch [{:4d}/{:4d}] Train Loss {:.4f} Valid Loss {:.4f} Time {:.1f}'.format(
+                        epoch,
+                        self.epoch,
+                        training_loss_list[-1][1],
+                        valid_loss_list[-1][1],
+                        time.time()-start_time,
+                    )
+                )
 
         # Save loss to file
         with open('./plotting/data/loss.pkl', 'wb') as f:
@@ -175,22 +170,22 @@ class ResNetPredictor:
 
     def predict(self, test_dataset):
         """Predict results for a given test dataset."""
+        # TODO: Implement this method
         # Setup params and dataloader
-        batch_size = 100
-        test_loader = DataLoader(
-            test_dataset,
-            batch_size=batch_size,
-            pin_memory=True,
-            shuffle=False,
-            drop_last=False,
-        )
+        # batch_size = 100
+        # test_loader = DataLoader(
+        #     test_dataset,
+        #     batch_size=batch_size,
+        #     pin_memory=True,
+        #     shuffle=False,
+        #     drop_last=False,
+        # )
 
         # Start predicting
         results = []
-        self.model.eval()
-        with torch.no_grad():
-            print('Forwarding model...')
-            for batch_idx, batch in enumerate(tqdm(test_loader)):
-                # TODO: Parse model output
+        # self.model.eval()
+        # with torch.no_grad():
+        #     print('Forwarding model...')
+        #     for batch_idx, batch in enumerate(tqdm(test_loader)):
 
         return results
