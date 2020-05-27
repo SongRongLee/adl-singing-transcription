@@ -13,7 +13,7 @@ def main(args):
 
     # Write the datasets into binary files
     filename_trail = '_dataset.pkl'
-    target_path = Path(args.output_dir) / (Path(args.data_dir).stem + filename_trail)
+    target_path = args.output_dir + filename_trail
     with open(target_path, 'wb') as f:
         pickle.dump(dataset, f)
     print('Dataset generated at {}.'.format(target_path))
