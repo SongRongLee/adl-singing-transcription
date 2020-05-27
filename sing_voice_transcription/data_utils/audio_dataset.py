@@ -34,7 +34,7 @@ def preprocess(gt_data, length):
 
         elif cur_time < cur_note_onset or cur_note >= len(gt_data):
             # For the frame that doesn't belong to any note
-            label = [0, 1, 49]
+            label = [0, 0, 49]
             new_label.append(np.array(label))
 
         elif abs(cur_time - cur_note_offset) < 0.0161:
