@@ -80,16 +80,23 @@ class MirEval():
         self.gt = None
         self.tr = None
 
-    def _prepare_list(self, path):
-    	with open(path) as json_data:
-    	    sol = json.load(json_data)
-    	length= len(sol)
-    	data= [sol[str(i)] for i in range(1, length+ 1)]
-    	return data
-
     def prepare_data(self, gt_path, tr_path):
-        self.gt = self._prepare_list(gt_path)
-        self.tr = self._prepare_list(tr_path)
+    	with open(tr_path) as json_data:
+    	    tr = json.load(json_data)
+
+    	with open(gt_path) as json_data:
+    	    gt = json.load(json_data)
+
+    	length= len(tr)
+    	gt_data= []
+    	tr_data= []
+    	for i in tr.keys():
+    		if i in gt.keys():
+    			gt_data.append(gt[i])
+    			tr_data.append(tr[i])
+
+    	self.gt = gt_data
+    	self.tr = tr_data
 
     def accuracy(self):
         return eval_all(self.gt, self.tr)
