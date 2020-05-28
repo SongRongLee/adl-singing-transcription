@@ -72,6 +72,11 @@ def eval_all(answer_true, answer_pred, onset_tolerance=0.05):
     final_ret['COnP'] = avg[5]
     final_ret['COn'] = avg[8]
 
+    print ("         Precision Recall F1-score")
+    print ("COnPOff  %f %f %f" %(avg[0], avg[1], avg[2]))
+    print ("COnP     %f %f %f" %(avg[3], avg[4], avg[5]))
+    print ("COn      %f %f %f" %(avg[6], avg[7], avg[8]))
+
     return final_ret
 
 
@@ -104,7 +109,7 @@ class MirEval():
 def main(args):
     my_eval= MirEval()
     my_eval.prepare_data(args.gt_file, args.predicted_file)
-    print (my_eval.accuracy())
+    my_eval.accuracy()
 
 
 if __name__ == '__main__':
