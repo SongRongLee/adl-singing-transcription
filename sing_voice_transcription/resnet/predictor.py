@@ -174,8 +174,8 @@ class ResNetPredictor:
 
     def _parse_frame_info(self, frame_info):
         """Parse frame info [(onset_probs, offset_probs, pitch_class)...] into desired label format."""
-        onset_thres = 0.1
-        offset_thres = 0.1
+        onset_thres = 0.3
+        offset_thres = 0.3
 
         result = []
         current_onset = None
