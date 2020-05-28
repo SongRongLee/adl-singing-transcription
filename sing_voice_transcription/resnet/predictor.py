@@ -174,8 +174,8 @@ class ResNetPredictor:
 
     def _parse_frame_info(self, frame_info):
         """Parse frame info [(onset_probs, offset_probs, pitch_class)...] into desired label format."""
-        onset_thres = 0.5
-        offset_thres = 0.5
+        onset_thres = 0.1
+        offset_thres = 0.1
 
         result = []
         current_onset = None
@@ -183,7 +183,7 @@ class ResNetPredictor:
         for idx, info in enumerate(frame_info):
             current_time = FRAME_LENGTH*idx + FRAME_LENGTH/2
 
-            if info[0] >= 0.5:  # If is onset
+            if info[0] >= onset_thres:  # If is onset
                 if current_onset is None:
                     current_onset = current_time
                 else:
@@ -191,7 +191,7 @@ class ResNetPredictor:
                     result.append([current_onset, current_time, pitch_counter.most_common(1)[0][0] + 36])
                     current_onset = current_time
                     pitch_counter.clear()
-            elif info[1] >= 0.5:  # If is offset
+            elif info[1] >= offset_thres:  # If is offset
                 if current_onset is not None:
                     result.append([current_onset, current_time, pitch_counter.most_common(1)[0][0] + 36])
                     current_onset = None

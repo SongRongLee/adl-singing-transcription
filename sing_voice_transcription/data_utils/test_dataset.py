@@ -32,14 +32,14 @@ class TestDataset(Dataset):
 
             # For each frame, combine adjacent frames as a data_instance
             feature_size, frame_num = features.shape[0], features.shape[1]
-            for frame_idx in range(feature_size):
+            for frame_idx in range(frame_num):
                 concated_feature = torch.empty(feature_size, 7)
                 for frame_window_idx in range(frame_idx - 3, frame_idx + 4):
                     # Boundary check
                     if frame_window_idx < 0:
                         choosed_idx = 0
-                    elif frame_window_idx >= feature_size:
-                        choosed_idx = feature_size - 1
+                    elif frame_window_idx >= frame_num:
+                        choosed_idx = frame_num - 1
                     else:
                         choosed_idx = frame_window_idx
 
