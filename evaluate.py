@@ -68,9 +68,9 @@ def eval_all(answer_true, answer_pred, onset_tolerance=0.05):
         avg[j] = avg[j] / len(answer_true)
 
     final_ret = {}
-    final_ret['COn'] = avg[2]
+    final_ret['COnPOff'] = avg[2]
     final_ret['COnP'] = avg[5]
-    final_ret['COnPOff'] = avg[8]
+    final_ret['COn'] = avg[8]
 
     return final_ret
 
