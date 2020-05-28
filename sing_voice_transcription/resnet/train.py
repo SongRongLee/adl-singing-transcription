@@ -12,9 +12,9 @@ def main(args):
         model_dir=args.model_dir,
         batch_size=50,
         valid_batch_size=50,
-        epoch=1000,
+        epoch=8000,
         lr=1e-3,
-        save_every_epoch=50,
+        save_every_epoch=200,
     )
 
 

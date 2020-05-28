@@ -1,6 +1,10 @@
 import argparse
+import json
 
-from ..data_utils import AudioDataset
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))  # nopep8
+from data_utils import TestDataset
 from predictor import ResNetPredictor
 
 
@@ -10,15 +14,16 @@ def main(args):
 
     # Read from test_dir
     print('Creating testing dataset...')
-    test_dataset = AudioDataset(args.test_dir, is_test=True)
+    test_dataset = TestDataset(args.test_dir)
 
     # Feed dataset to the model
     print('Predicting {}...'.format(args.test_dir))
     results = predictor.predict(test_dataset)
 
-    # Write output_results to target file
+    # Write results to target file
     with open(args.predict_file, 'w') as f:
-        # TODO: Write predicted data
+        output_string = json.dumps(results)
+        f.write(output_string)
 
     print('Prediction done. File writed to: {}'.format(args.predict_file))
 

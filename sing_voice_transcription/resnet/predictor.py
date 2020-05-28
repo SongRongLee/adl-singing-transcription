@@ -2,10 +2,12 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
+import librosa
 import time
 from pathlib import Path
 import pickle
 from tqdm import tqdm
+from collections import Counter
 
 import sys
 import os
@@ -14,6 +16,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))  # nopep8
 from data_utils import value_to_label
 
 from net import ResNet
+
+FRAME_LENGTH = librosa.frames_to_time(1, sr=16000, hop_length=512)
 
 
 class ResNetPredictor:
@@ -168,24 +172,73 @@ class ResNetPredictor:
 
         print('Training done in {:.1f} minutes.'.format((time.time()-start_time)/60))
 
+    def _parse_frame_info(self, frame_info):
+        """Parse frame info [(onset_probs, offset_probs, pitch_class)...] into desired label format."""
+        onset_thres = 0.5
+        offset_thres = 0.5
+
+        result = []
+        current_onset = None
+        pitch_counter = Counter()
+        for idx, info in enumerate(frame_info):
+            current_time = FRAME_LENGTH*idx + FRAME_LENGTH/2
+
+            if info[0] >= 0.5:  # If is onset
+                if current_onset is None:
+                    current_onset = current_time
+                else:
+                    # If current_onset exists, make this onset a offset and the next current_onset
+                    result.append([current_onset, current_time, pitch_counter.most_common(1)[0][0] + 36])
+                    current_onset = current_time
+                    pitch_counter.clear()
+            elif info[1] >= 0.5:  # If is offset
+                if current_onset is not None:
+                    result.append([current_onset, current_time, pitch_counter.most_common(1)[0][0] + 36])
+                    current_onset = None
+                    pitch_counter.clear()
+
+            # If current_onset exist, add count for the pitch
+            if current_onset is not None:
+                pitch_counter[info[2]] += 1
+
+        return result
+
     def predict(self, test_dataset):
         """Predict results for a given test dataset."""
-        # TODO: Implement this method
         # Setup params and dataloader
-        # batch_size = 100
-        # test_loader = DataLoader(
-        #     test_dataset,
-        #     batch_size=batch_size,
-        #     pin_memory=True,
-        #     shuffle=False,
-        #     drop_last=False,
-        # )
+        batch_size = 500
+        test_loader = DataLoader(
+            test_dataset,
+            batch_size=batch_size,
+            pin_memory=False,
+            shuffle=False,
+            drop_last=False,
+        )
 
         # Start predicting
         results = []
-        # self.model.eval()
-        # with torch.no_grad():
-        #     print('Forwarding model...')
-        #     for batch_idx, batch in enumerate(tqdm(test_loader)):
+        self.model.eval()
+        with torch.no_grad():
+            print('Forwarding model...')
+            song_frames_table = {}
+            for batch_idx, batch in enumerate(tqdm(test_loader)):
+                # Parse batch data
+                input_tensor = batch[0].unsqueeze(1).cuda()
+                song_ids = batch[1]
+
+                # Forward model
+                onset_logits, offset_logits, pitch_logits = self.model(input_tensor)
+                onset_probs, offset_probs, pitch_logits = torch.sigmoid(onset_logits).cpu(), torch.sigmoid(offset_logits).cpu(), pitch_logits.cpu()
+
+                # Collect frames for corresponding songs
+                for bid, song_id in enumerate(song_ids):
+                    frame_info = (onset_probs[bid], offset_probs[bid], torch.argmax(pitch_logits[bid]).item())
+                    song_frames_table.setdefault(song_id, [])
+                    song_frames_table[song_id].append(frame_info)
+
+            # Parse frame info into output format for every song
+            results = {}
+            for song_id, frame_info in song_frames_table.items():
+                results[song_id] = self._parse_frame_info(frame_info)
 
         return results
