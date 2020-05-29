@@ -1,4 +1,4 @@
 # Customized
 models/*
 !models/.gitkeep
-/plotting/data/*.json
+/plotting/data/*.pkl
