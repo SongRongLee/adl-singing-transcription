@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch
-
+import torch.nn.functional as F
 
 class AlexNet(nn.Module):
     def __init__(self, output_size=52):
@@ -16,20 +16,20 @@ class AlexNet(nn.Module):
 
         # Modify first conv layer
         num_fout = self.alexnet.features[0].out_channels
-        #self.alexnet.features[0] = nn.Conv2d(1, num_fout, kernel_size=7, stride=2, padding=3, bias=False)
-        #self.alexnet.features[0] = nn.Conv2d(1, num_fout, kernel_size=11, stride=4, padding=2)
-        self.alexnet.features[0] = nn.Conv2d(1, num_fout, kernel_size=7, stride=2, padding=3)
+        self.alexnet.features[0] = nn.Conv2d(1, num_fout, kernel_size=11, stride=4, padding=2)
 
-        self.avgpool = nn.AdaptiveAvgPool2d((224, 224))
 
     def forward(self, x):
-       # print("@@@@")
-        x = torch.reshape(x, (-1, 1, 359, 35))
-        #l = []
-        #for i in range(len(x)):
-        #    l.append(self.avgpool(x[i]))
-        #x = torch.stack(l)
         #print(x.shape)
+        #x [50, 1, 1795, 7]
+        #x = torch.expand(x, (-1, 1, 359, 35))
+
+        #repeat
+        x = x.repeat(1, 1, 1, 10)
+        #interpolate nearest
+        #x = F.interpolate(x, size = [1975,70], mode='nearest')
+        #interpolate bilinear
+        #x = F.interpolate(x, size = [1975,70], mode='bilinear')
         out = self.alexnet(x)
         # print(out.shape)
         # [batch, output_size]
@@ -44,5 +44,5 @@ class AlexNet(nn.Module):
 if __name__ == '__main__':
     from torchsummary import summary
     model = AlexNet().cuda()
-    #summary(model, input_size=(1, 359, 35))
-    summary(model, input_size=(1, 224, 224))
+    summary(model, input_size=(1, 1795 , 70))
+    #summary(model, input_size=(1, 224, 224))
