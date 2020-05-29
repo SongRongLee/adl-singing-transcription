@@ -108,16 +108,6 @@ class AlexNetPredictor:
                 input_tensor = batch[0].permute(0, 2, 1).unsqueeze(1).cuda()
                 osnet_prob, offset_prob, pitch_class = batch[1][:, 0].float().cuda(), batch[1][:, 1].float().cuda(), batch[1][:, 2].cuda()
 
-                # test
-                #print(self.model)
-                #print(input_tensor.shape)
-                #input_tensor = torch.reshape(input_tensor, (50, 1, 359, 35))
-                #avgpool = nn.AdaptiveAvgPool2d((224, 224))
-                #l = []
-                #for i in range(len(input_tensor)):
-                #    l.append(avgpool(input_tensor[i]))
-                #input_tensor = torch.stack(l)
-                #print(input_tensor.shape)
                 # Forward model
                 onset_logits, offset_logits, pitch_logits = self.model(input_tensor)
 
