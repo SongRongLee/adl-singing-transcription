@@ -1,0 +1,4 @@
+# Customized
+models/*
+!models/.gitkeep
+/plotting/data/*.json
