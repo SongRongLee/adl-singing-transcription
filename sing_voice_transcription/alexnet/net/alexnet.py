@@ -25,11 +25,11 @@ class AlexNet(nn.Module):
         #x = torch.expand(x, (-1, 1, 359, 35))
 
         #repeat
-        x = x.repeat(1, 1, 1, 10)
+        #x = x.repeat(1, 1, 1, 10)
         #interpolate nearest
         #x = F.interpolate(x, size = [1975,70], mode='nearest')
         #interpolate bilinear
-        #x = F.interpolate(x, size = [1975,70], mode='bilinear')
+        x = F.interpolate(x, size = [1975,70], mode='bilinear')
         out = self.alexnet(x)
         # print(out.shape)
         # [batch, output_size]
