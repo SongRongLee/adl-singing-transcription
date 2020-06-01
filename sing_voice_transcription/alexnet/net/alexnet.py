@@ -44,5 +44,5 @@ class AlexNet(nn.Module):
 if __name__ == '__main__':
     from torchsummary import summary
     model = AlexNet().cuda()
-    summary(model, input_size=(1, 1795 , 70))
+    summary(model, input_size=(1, 1795 , 7))
     #summary(model, input_size=(1, 224, 224))
