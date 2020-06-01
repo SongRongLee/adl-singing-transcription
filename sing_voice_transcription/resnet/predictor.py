@@ -174,26 +174,35 @@ class ResNetPredictor:
 
     def _parse_frame_info(self, frame_info):
         """Parse frame info [(onset_probs, offset_probs, pitch_class)...] into desired label format."""
-        onset_thres = 0.3
-        offset_thres = 0.3
+        onset_thres = 0.25
+        offset_thres = 0.25
 
         result = []
         current_onset = None
         pitch_counter = Counter()
+        last_onset = 0.0
         for idx, info in enumerate(frame_info):
             current_time = FRAME_LENGTH*idx + FRAME_LENGTH/2
 
             if info[0] >= onset_thres:  # If is onset
                 if current_onset is None:
                     current_onset = current_time
-                else:
+                    last_onset = info[0]
+                elif info[0] >= onset_thres:
                     # If current_onset exists, make this onset a offset and the next current_onset
-                    result.append([current_onset, current_time, pitch_counter.most_common(1)[0][0] + 36])
+                    if pitch_counter.most_common(1)[0][0] != 49:
+                        result.append([current_onset, current_time, pitch_counter.most_common(1)[0][0] + 36])
+                    elif len(pitch_counter.most_common(2)) == 2:
+                        result.append([current_onset, current_time, pitch_counter.most_common(2)[1][0] + 36])
                     current_onset = current_time
+                    last_onset = info[0]
                     pitch_counter.clear()
             elif info[1] >= offset_thres:  # If is offset
                 if current_onset is not None:
-                    result.append([current_onset, current_time, pitch_counter.most_common(1)[0][0] + 36])
+                    if pitch_counter.most_common(1)[0][0] != 49:
+                        result.append([current_onset, current_time, pitch_counter.most_common(1)[0][0] + 36])
+                    elif len(pitch_counter.most_common(2)) == 2:
+                        result.append([current_onset, current_time, pitch_counter.most_common(2)[1][0] + 36])
                     current_onset = None
                     pitch_counter.clear()
 
