@@ -9,9 +9,9 @@ class EffNet(nn.Module):
 
         # Create model
         torch.hub.list('rwightman/gen-efficientnet-pytorch')
-        self.effnet = torch.hub.load('rwightman/gen-efficientnet-pytorch', 'efficientnet_b0', pretrained=False)
+        self.effnet = torch.hub.load('rwightman/gen-efficientnet-pytorch', 'efficientnet_b3', pretrained=False)
         
-        self.effnet.conv_stem = nn.Conv2d(1, 32, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+        self.effnet.conv_stem = nn.Conv2d(1, 40, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
         # Modify last linear layer
         num_ftrs = self.effnet.classifier.in_features
         self.effnet.classifier= nn.Linear(num_ftrs, output_size)
@@ -39,4 +39,4 @@ class EffNet(nn.Module):
 if __name__ == '__main__':
     from torchsummary import summary
     model = EffNet().cuda()
-    #summary(model, input_size=(1, 1795, 7))
+    summary(model, input_size=(1, 1795, 7))

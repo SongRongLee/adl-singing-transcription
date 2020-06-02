@@ -78,7 +78,7 @@ class EffNetPredictor:
         self.train_loader = DataLoader(
             self.training_dataset,
             batch_size=self.batch_size,
-            num_workers=4,
+            num_workers=2,
             pin_memory=True,
             shuffle=True,
             drop_last=True,
@@ -86,7 +86,7 @@ class EffNetPredictor:
         self.valid_loader = DataLoader(
             self.validation_dataset,
             batch_size=self.valid_batch_size,
-            num_workers=4,
+            num_workers=2,
             pin_memory=True,
             shuffle=False,
             drop_last=False,
@@ -152,7 +152,7 @@ class EffNetPredictor:
 
                 # Save model
                 save_dict = self.model.state_dict()
-                target_model_path = Path(self.model_dir) / 'e_{}'.format(epoch)
+                target_model_path = Path(self.model_dir) / 'b4_e_{}'.format(epoch)
                 torch.save(save_dict, target_model_path)
 
                 # Save loss list
@@ -178,8 +178,8 @@ class EffNetPredictor:
 
     def _parse_frame_info(self, frame_info):
         """Parse frame info [(onset_probs, offset_probs, pitch_class)...] into desired label format."""
-        onset_thres = 0.3
-        offset_thres = 0.3
+        onset_thres = 0.1
+        offset_thres = 0.1
 
         result = []
         current_onset = None
@@ -191,18 +191,24 @@ class EffNetPredictor:
             if info[0] >= onset_thres:  # If is onset
                 if current_onset is None:
                     current_onset = current_time
-                    last_onset = info[0]
-                elif info[0] >= onset_thres:
+                    last_onset = info[0] - onset_thres
+                elif ( info[0] >= onset_thres+ last_onset * math.pow(0.8, (current_time- current_onset) / 0.032) 
+                    and current_time- current_onset > 0.1):
+                # elif info[0] >= onset_thres:
                     # If current_onset exists, make this onset a offset and the next current_onset
                     if pitch_counter.most_common(1)[0][0] != 49:
                         result.append([current_onset, current_time, pitch_counter.most_common(1)[0][0] + 36])
+                    elif len(pitch_counter.most_common(2)) == 2:
+                        result.append([current_onset, current_time, pitch_counter.most_common(2)[1][0] + 36])
                     current_onset = current_time
-                    last_onset = info[0]
+                    last_onset = info[0] - onset_thres
                     pitch_counter.clear()
             elif info[1] >= offset_thres:  # If is offset
                 if current_onset is not None:
                     if pitch_counter.most_common(1)[0][0] != 49:
                         result.append([current_onset, current_time, pitch_counter.most_common(1)[0][0] + 36])
+                    elif len(pitch_counter.most_common(2)) == 2:
+                        result.append([current_onset, current_time, pitch_counter.most_common(2)[1][0] + 36])
                     current_onset = None
                     pitch_counter.clear()
 

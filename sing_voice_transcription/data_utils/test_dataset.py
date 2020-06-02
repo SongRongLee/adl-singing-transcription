@@ -17,14 +17,14 @@ class TestDataset(Dataset):
 
     def __init__(self, data_dir, is_test=False):
         self.data_instances = []
-        sr = 16000
 
         for song_dir in tqdm(sorted(Path(data_dir).iterdir())):
             wav_path = song_dir / 'Vocal.wav'
             song_id = song_dir.stem
 
             # Load song and extract features
-            y, _ = librosa.core.load(wav_path, sr=sr, mono=True)
+            y, sr = librosa.core.load(wav_path, sr=None, mono=True)
+            y = librosa.core.resample(y= y, orig_sr= sr, target_sr= 16000)
             frame512 = np.abs(librosa.core.stft(y, n_fft=512, hop_length=512, center=True))
             frame1024 = np.abs(librosa.core.stft(y, n_fft=1024, hop_length=512, center=True))
             frame2048 = np.abs(librosa.core.stft(y, n_fft=2048, hop_length=512, center=True))
