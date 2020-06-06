@@ -32,11 +32,17 @@ class TestRNNDataset(Dataset):
             features = np.concatenate((frame512, frame1024, frame2048), axis=0)
 
             # For each chunk, combine adjacent frames for each frame in chunk as a data_instance
+            # Append the last chunk (< chunk size) with zeros
             feature_size, frame_num = features.shape[0], features.shape[1]
             for start_frame_idx in range(0, frame_num, self.chunk_size):
-                chunk_feature = torch.empty(self.chunk_size, feature_size, 7, dtype=torch.float)
+                chunk_feature = torch.zeros(self.chunk_size, feature_size, 7, dtype=torch.float)
                 
-                end_frame_idx = start_frame_idx+self.chunk_size if start_frame_idx+self.chunk_size < frame_num else frame_num-1
+                # Compute end frame idx
+                if start_frame_idx + self.chunk_size < frame_num:
+                    end_frame_idx = start_frame_idx + self.chunk_size
+                else:
+                    end_frame_idx = frame_num - 1
+                
                 for frame_chunk_idx in range(start_frame_idx, end_frame_idx):
                     for frame_window_idx in range(frame_chunk_idx - 3, frame_chunk_idx + 4):
                         # Boundary check

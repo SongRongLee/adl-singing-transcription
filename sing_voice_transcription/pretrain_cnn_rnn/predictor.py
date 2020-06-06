@@ -241,7 +241,7 @@ class RNNPredictor:
         with torch.no_grad():
             print('Forwarding model...')
             song_frames_table = defaultdict(lambda: [])
-            song_frame_ids_table = defaultdict(lambda: set())
+
             for batch_idx, batch in enumerate(tqdm(test_loader)):
                 # Parse batch data
                 input_tensor = batch[0].unsqueeze(2).cuda()
@@ -252,8 +252,8 @@ class RNNPredictor:
                 onset_logits, offset_logits, pitch_logits = self.model(input_tensor)
                 onset_probs, offset_probs, pitch_logits = torch.sigmoid(onset_logits).cpu(), torch.sigmoid(offset_logits).cpu(), pitch_logits.cpu()
 
+                # Collect frames for corresponding songs
                 if discard_frame == True:
-                    # Collect frames for corresponding songs
                     for bid, song_id in enumerate(song_ids):
                         for chunk_idx in range(chunk_size):
                             frame_info = (onset_probs[bid][chunk_idx], offset_probs[bid][chunk_idx], torch.argmax(pitch_logits[bid][chunk_idx]).item())
@@ -261,11 +261,9 @@ class RNNPredictor:
                 else:
                     for bid, (song_id, start_frame_idx) in enumerate(zip(song_ids, start_frame_ids)):
                         for chunk_idx in range(chunk_size):
-                            frame_idx = start_frame_idx + chunk_size
-                            if frame_idx not in song_frame_ids_table[song_id]:
-                                song_frame_ids_table[song_id].add(start_frame_idx+chunk_size)
-                                frame_info = (onset_probs[bid][chunk_idx], offset_probs[bid][chunk_idx], torch.argmax(pitch_logits[bid][chunk_idx]).item())
-                                song_frames_table[song_id].append(frame_info)
+                            frame_idx = (start_frame_idx + chunk_idx).item()
+                            frame_info = (onset_probs[bid][chunk_idx], offset_probs[bid][chunk_idx], torch.argmax(pitch_logits[bid][chunk_idx]).item())
+                            song_frames_table[song_id].append(frame_info)
 
             # Parse frame info into output format for every song
             results = {}
