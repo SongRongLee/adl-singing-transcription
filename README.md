@@ -1,4 +1,10 @@
-# **Applied Deep Learning Spring 2020 Final Project**
+# **Applied Deep Learning Spring 2020 Final Project -- Singing Transcription**
+
+## Report
+[Link](https://github.com/SongRongLee/ntu-adl-final)
+
+## Demo Video
+[Link](https://github.com/SongRongLee/ntu-adl-final)
 
 ## **Ground truth file structure**
 ```
