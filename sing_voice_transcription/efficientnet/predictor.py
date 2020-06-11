@@ -218,7 +218,7 @@ class EffNetPredictor:
 
         return result
 
-    def predict(self, test_dataset):
+    def predict(self, test_dataset, results= {}, show_tqdm= True):
         """Predict results for a given test dataset."""
         # Setup params and dataloader
         batch_size = 500
@@ -231,28 +231,44 @@ class EffNetPredictor:
         )
 
         # Start predicting
-        results = []
         self.model.eval()
         with torch.no_grad():
-            print('Forwarding model...')
             song_frames_table = {}
-            for batch_idx, batch in enumerate(tqdm(test_loader)):
-                # Parse batch data
-                input_tensor = batch[0].unsqueeze(1).cuda()
-                song_ids = batch[1]
 
-                # Forward model
-                onset_logits, offset_logits, pitch_logits = self.model(input_tensor)
-                onset_probs, offset_probs, pitch_logits = torch.sigmoid(onset_logits).cpu(), torch.sigmoid(offset_logits).cpu(), pitch_logits.cpu()
+            if show_tqdm == True:
+                print('Forwarding model...')
+                for batch_idx, batch in enumerate(tqdm(test_loader)):
+                    # Parse batch data
+                    input_tensor = batch[0].unsqueeze(1).cuda()
+                    song_ids = batch[1]
 
-                # Collect frames for corresponding songs
-                for bid, song_id in enumerate(song_ids):
-                    frame_info = (onset_probs[bid], offset_probs[bid], torch.argmax(pitch_logits[bid]).item())
-                    song_frames_table.setdefault(song_id, [])
-                    song_frames_table[song_id].append(frame_info)
+                    # Forward model
+                    onset_logits, offset_logits, pitch_logits = self.model(input_tensor)
+                    onset_probs, offset_probs, pitch_logits = torch.sigmoid(onset_logits).cpu(), torch.sigmoid(offset_logits).cpu(), pitch_logits.cpu()
+
+                    # Collect frames for corresponding songs
+                    for bid, song_id in enumerate(song_ids):
+                        frame_info = (onset_probs[bid], offset_probs[bid], torch.argmax(pitch_logits[bid]).item())
+                        song_frames_table.setdefault(song_id, [])
+                        song_frames_table[song_id].append(frame_info)
+                        
+            else:
+                for batch_idx, batch in enumerate(test_loader):
+                    # Parse batch data
+                    input_tensor = batch[0].unsqueeze(1).cuda()
+                    song_ids = batch[1]
+
+                    # Forward model
+                    onset_logits, offset_logits, pitch_logits = self.model(input_tensor)
+                    onset_probs, offset_probs, pitch_logits = torch.sigmoid(onset_logits).cpu(), torch.sigmoid(offset_logits).cpu(), pitch_logits.cpu()
+
+                    # Collect frames for corresponding songs
+                    for bid, song_id in enumerate(song_ids):
+                        frame_info = (onset_probs[bid], offset_probs[bid], torch.argmax(pitch_logits[bid]).item())
+                        song_frames_table.setdefault(song_id, [])
+                        song_frames_table[song_id].append(frame_info)
 
             # Parse frame info into output format for every song
-            results = {}
             for song_id, frame_info in song_frames_table.items():
                 results[song_id] = self._parse_frame_info(frame_info)
 
