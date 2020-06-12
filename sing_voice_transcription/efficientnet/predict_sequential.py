@@ -5,7 +5,8 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))  # nopep8
 from predictor import EffNetPredictor
-from seq_dataset import SeqDataset
+
+from data_utils.seq_dataset import SeqDataset
 from pathlib import Path
 from tqdm import tqdm
 import mido
