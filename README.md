@@ -32,6 +32,7 @@ It does svs first (using spleeter), and then run efficientnet. Finally, it gener
 `python do_everything.py --tomidi -i $input_wav_file -o $output_path`
 - `input_wav_file`: Path to the input file.
 - `output_path`: Output midi path.
+
 The default model is efficientnet-b3 and the model path is "sing_voice_transcription/efficientnet/b4_e_6600"
 
 If you want to specify the model path, then you can add another argument:
