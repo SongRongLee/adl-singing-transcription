@@ -29,7 +29,7 @@ This script is used to run efficientnet (TODO: run RNN with pretrained model).
 
 It does svs first (using spleeter), and then run efficientnet. Finally, it generates a midi file. 
 
-`python do_everything.py --tomidi -i $input_wav_file -o $output_path`
+`python do_everything.py $input_wav_file $output_path`
 - `input_wav_file`: Path to the input file.
 - `output_path`: Output midi path.
 
@@ -37,7 +37,7 @@ The default model is efficientnet-b3 and the model path is "sing_voice_transcrip
 
 If you want to specify the model path, then you can add another argument:
 
-`python do_everything.py --tomidi -i $input_wav_file -o $output_path -mp $model_path`
+`python do_everything.py $input_wav_file $output_path -mp $model_path`
 - `model_path`: Path to the model file.
 
 ### **Evaluation**
