@@ -4,6 +4,7 @@ import json
 import pandas as pd
 import numpy as np
 
+
 def eval_one_data(answer_true, answer_pred, onset_tolerance=0.05):
     ref_pitches = []
     est_pitches = []
@@ -29,12 +30,11 @@ def eval_one_data(answer_true, answer_pred, onset_tolerance=0.05):
     est_pitches = util.midi_to_hz(est_pitches)
 
     if len(est_intervals) == 0:
-        ret= np.zeros(14)
-        ret[9]= len(ref_pitches)
+        ret = np.zeros(14)
+        ret[9] = len(ref_pitches)
         return ret
 
-    raw_data = transcription.evaluate(ref_intervals, ref_pitches
-                    , est_intervals, est_pitches, onset_tolerance=onset_tolerance, pitch_tolerance= 50)
+    raw_data = transcription.evaluate(ref_intervals, ref_pitches, est_intervals, est_pitches, onset_tolerance=onset_tolerance, pitch_tolerance=50)
 
     ret = np.zeros(14)
     ret[0] = raw_data['Precision']
@@ -72,10 +72,10 @@ def eval_all(answer_true, answer_pred, onset_tolerance=0.05):
     final_ret['COnP'] = avg[5]
     final_ret['COn'] = avg[8]
 
-    print ("         Precision Recall F1-score")
-    print ("COnPOff  %f %f %f" %(avg[0], avg[1], avg[2]))
-    print ("COnP     %f %f %f" %(avg[3], avg[4], avg[5]))
-    print ("COn      %f %f %f" %(avg[6], avg[7], avg[8]))
+    print("         Precision Recall F1-score")
+    print("COnPOff  %f %f %f" % (avg[0], avg[1], avg[2]))
+    print("COnP     %f %f %f" % (avg[3], avg[4], avg[5]))
+    print("COn      %f %f %f" % (avg[6], avg[7], avg[8]))
 
     return final_ret
 
@@ -86,28 +86,29 @@ class MirEval():
         self.tr = None
 
     def prepare_data(self, gt_path, tr_path):
-    	with open(tr_path) as json_data:
-    	    tr = json.load(json_data)
+        with open(tr_path) as json_data:
+            tr = json.load(json_data)
 
-    	with open(gt_path) as json_data:
-    	    gt = json.load(json_data)
+        with open(gt_path) as json_data:
+            gt = json.load(json_data)
 
-    	length= len(tr)
-    	gt_data= []
-    	tr_data= []
-    	for i in tr.keys():
-    		if i in gt.keys():
-    			gt_data.append(gt[i])
-    			tr_data.append(tr[i])
+        length = len(tr)
+        gt_data = []
+        tr_data = []
+        for i in tr.keys():
+            if i in gt.keys():
+                gt_data.append(gt[i])
+                tr_data.append(tr[i])
 
-    	self.gt = gt_data
-    	self.tr = tr_data
+        self.gt = gt_data
+        self.tr = tr_data
 
     def accuracy(self):
         return eval_all(self.gt, self.tr)
 
+
 def main(args):
-    my_eval= MirEval()
+    my_eval = MirEval()
     my_eval.prepare_data(args.gt_file, args.predicted_file)
     my_eval.accuracy()
 
