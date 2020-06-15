@@ -9,7 +9,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 
 from func2module import Interpolate, Flatten
 from resnet.net.resnet import ResNet
-from efficientnet.net.effnet import EffNet
+from efficientnet.net.effnet import EffNetb0
 from alexnet.net.alexnet import AlexNet
 
 
@@ -35,7 +35,7 @@ class RNN(nn.Module):
                 feature_extractor = torch.nn.Sequential(*list(model.resnet.children())[:-1])
                 self.embedding_dim += self.feature_size_table['resnet']
             elif idx == 1:
-                model = EffNet().cuda()
+                model = EffNetb0().cuda()
                 feature_extractor = torch.nn.Sequential(*list(model.effnet.children())[:-1])
                 self.embedding_dim += self.feature_size_table['effent']
             elif idx == 2:
