@@ -1,7 +1,7 @@
 # **Applied Deep Learning Spring 2020 Final Project -- Singing Transcription**
 
 ## Report
-[Link](https://github.com/SongRongLee/ntu-adl-final)
+[Link](https://github.com/SongRongLee/adl-singing-transcription/blob/master/ntu_adl_final_report.pdf)
 
 ## Demo Video
 [Link](https://github.com/SongRongLee/ntu-adl-final)
